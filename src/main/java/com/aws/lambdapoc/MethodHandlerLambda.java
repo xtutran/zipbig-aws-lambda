@@ -35,34 +35,51 @@ public class MethodHandlerLambda {
         AmazonS3 s3Client = AmazonS3ClientBuilder.standard().build();
 
         String bucketName = "my-emr-poc";
-        String prefix = "axa_rev_sg/raw";
+        String prefix = "axa_rev_sg/test";
+        long maxSize = 4 * 1024 * 1024 * 1024L;
 
-        ObjectListing listing = s3Client.listObjects(new ListObjectsRequest().withBucketName(bucketName).withPrefix(prefix));
+        ListObjectsRequest objRequest = new ListObjectsRequest().withBucketName(bucketName).withPrefix(prefix);
+        ObjectListing listing = s3Client.listObjects(objRequest);
 
         System.out.println("start loop");
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         ZipOutputStream zipOut = new ZipOutputStream(outputStream);
-
+        int count = 0;
+        long totalSize = 0;
         try {
-            for (S3ObjectSummary objectSummary : listing.getObjectSummaries()) {
-                System.out.printf(" - %s (size: %d)\n", objectSummary.getKey(), objectSummary.getSize());
 
-                S3Object obj = s3Client.getObject(objectSummary.getBucketName(), objectSummary.getKey());
-                InputStream objData = obj.getObjectContent();
+            do {
+                for (S3ObjectSummary objectSummary : listing.getObjectSummaries()) {
+                    System.out.printf(" - %s (size: %d)\n", objectSummary.getKey(), objectSummary.getSize());
+                    if (objectSummary.getKey().endsWith("/")) {
+                        System.out.println("Skip folder");
+                        continue;
+                    }
 
-                ZipEntry zipEntry = new ZipEntry(objectSummary.getKey());
-                zipOut.putNextEntry(zipEntry);
+                    if (totalSize > maxSize) {
+                        System.out.println("Exceed 10GB");
+                        break;
+                    }
 
-                byte[] bytes = new byte[1024];
-                int length;
-                while ((length = objData.read(bytes)) >= 0) {
-                    zipOut.write(bytes, 0, length);
+                    S3Object obj = s3Client.getObject(objectSummary.getBucketName(), objectSummary.getKey());
+                    InputStream objData = obj.getObjectContent();
+
+                    ZipEntry zipEntry = new ZipEntry(objectSummary.getKey());
+                    zipOut.putNextEntry(zipEntry);
+
+                    byte[] bytes = new byte[1024];
+                    int length;
+                    while ((length = objData.read(bytes)) >= 0) {
+                        zipOut.write(bytes, 0, length);
+                    }
+                    objData.close();
+                    zipOut.closeEntry();
+                    count++;
+                    totalSize += objectSummary.getSize();
                 }
-                objData.close();
-                zipOut.closeEntry();
-
-            }
+                objRequest.setMarker(listing.getNextMarker());
+            } while (listing.isTruncated());
 
             zipOut.close();
         } catch (IOException e) {
@@ -72,6 +89,6 @@ public class MethodHandlerLambda {
         uploadToS3(s3Client, "my-emr-poc", "test.zip", outputStream.toByteArray());
         System.out.println("end loop");
 
-        return "Hello World - " + input;
+        return "Hello World - count: " + count + " total size: " + totalSize;
     }
 }
