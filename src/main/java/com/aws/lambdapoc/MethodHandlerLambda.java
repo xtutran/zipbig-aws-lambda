@@ -36,7 +36,7 @@ public class MethodHandlerLambda {
 
         String bucketName = "my-emr-poc";
         String prefix = "axa_rev_sg/test";
-        long maxSize = 4 * 1024 * 1024 * 1024L;
+        long maxSize = 10 * 1024 * 1024 * 1024L;
 
         ListObjectsRequest objRequest = new ListObjectsRequest().withBucketName(bucketName).withPrefix(prefix);
         ObjectListing listing = s3Client.listObjects(objRequest);
@@ -52,6 +52,7 @@ public class MethodHandlerLambda {
             do {
                 for (S3ObjectSummary objectSummary : listing.getObjectSummaries()) {
                     System.out.printf(" - %s (size: %d)\n", objectSummary.getKey(), objectSummary.getSize());
+                    totalSize += objectSummary.getSize();
                     if (objectSummary.getKey().endsWith("/")) {
                         System.out.println("Skip folder");
                         continue;
@@ -59,6 +60,7 @@ public class MethodHandlerLambda {
 
                     if (totalSize > maxSize) {
                         System.out.println("Exceed 10GB");
+                        totalSize -= objectSummary.getSize();
                         break;
                     }
 
@@ -76,7 +78,6 @@ public class MethodHandlerLambda {
                     objData.close();
                     zipOut.closeEntry();
                     count++;
-                    totalSize += objectSummary.getSize();
                 }
                 objRequest.setMarker(listing.getNextMarker());
             } while (listing.isTruncated());
