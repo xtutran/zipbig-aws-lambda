@@ -41,7 +41,7 @@ public class ZipHandler implements RequestHandler<RequestInput, String>{
         String prefix = input.getPrefix();
         long maxSize = input.getMaxSize();
 
-        String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddTHHmmss"));
+        String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
         String outputFile = String.format("archive_%s.zip", currentTime);
 
         ListObjectsRequest objRequest = new ListObjectsRequest().withBucketName(bucketName).withPrefix(prefix);
