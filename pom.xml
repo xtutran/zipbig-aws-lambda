@@ -14,11 +14,11 @@
             <artifactId>aws-lambda-java-core</artifactId>
             <version>1.2.0</version>
         </dependency>
-        <!--<dependency>-->
-            <!--<groupId>com.amazonaws</groupId>-->
-            <!--<artifactId>aws-lambda-java-events</artifactId>-->
-            <!--<version>2.2.6</version>-->
-        <!--</dependency>-->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-lambda-java-events</artifactId>
+            <version>2.2.6</version>
+        </dependency>
         <!--<dependency>-->
             <!--<groupId>com.amazonaws</groupId>-->
             <!--<artifactId>aws-lambda-java-log4j</artifactId>-->
@@ -32,6 +32,11 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-s3</artifactId>
+            <version>1.11.163</version>
+        </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-lambda</artifactId>
             <version>1.11.163</version>
         </dependency>
     </dependencies>
@@ -53,6 +58,14 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
             </plugin>
         </plugins>
     </build>
