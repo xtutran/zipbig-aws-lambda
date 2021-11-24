@@ -13,7 +13,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-public class ZipHandler implements RequestHandler<RequestInput, String>{
+public class ZipHandler implements RequestHandler<RequestInput, String> {
 
     private void uploadToS3(AmazonS3 s3client, String bucketName, String fileName, InputStream stream, int length) {
         try {
@@ -31,6 +31,10 @@ public class ZipHandler implements RequestHandler<RequestInput, String>{
     }
 
     public String handleRequest(RequestInput input, Context context) {
+        if (input.isNull()) {
+            return "Empty request input!";
+        }
+
         context.getLogger().log("Input: " + input.getBucketName() + "\n");
         context.getLogger().log("Input: " + input.getPrefix() + "\n");
         context.getLogger().log("Input: " + input.getMaxSize() + "\n");
@@ -46,7 +50,6 @@ public class ZipHandler implements RequestHandler<RequestInput, String>{
 
         ListObjectsRequest objRequest = new ListObjectsRequest().withBucketName(bucketName).withPrefix(prefix);
         ObjectListing listing = s3Client.listObjects(objRequest);
-
 
         //final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         CircularByteBuffer cbb = new CircularByteBuffer(CircularByteBuffer.INFINITE_SIZE);

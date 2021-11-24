@@ -13,6 +13,10 @@ public class RequestInput {
         this.maxSize = maxSize;
     }
 
+    public boolean isNull() {
+        return (this.bucketName == null) || (this.prefix == null);
+    }
+
     public String getBucketName() {
         return bucketName;
     }
