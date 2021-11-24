@@ -1,2 +1,2 @@
 build:
-	mvn clean install
+	mvn clean install -q
