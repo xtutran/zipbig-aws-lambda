@@ -9,11 +9,16 @@ __change_directory() {
   fi
 }
 
+__clean_project() {
+  echo "---> Clean the project ..."
+  mvn clean -q
+  rm -rf ./dist
+}
+
 __build_project() {
   echo "---> Build the project ..."
   mkdir -p dist
   mvn clean install -q
-  PACKAGE_NAME=$(basename `PWD`)
   TARGET_FILE="target/${PACKAGE_NAME}-1.0-SNAPSHOT.jar"
   if [ ! "$?" -eq 0 ]; then
     echo "ERROR : ❌ > THE JAR CAN'T BE GENERATED‼️"
@@ -27,8 +32,7 @@ __build_project() {
 ## Publish
 __copy_delivery_package() {
   echo "---> Copy the delivery package for the deployment ..."
-  PACKAGE_NAME=$(basename `PWD`)
-  S3_URL_PACKAGE="${S3_BUCKET}/${PACKAGE_NAME}"
+  S3_URL_PACKAGE="s3://${S3_BUCKET}/${PACKAGE_NAME}"
   echo "${S3_URL_PACKAGE}"
   aws s3 sync ${AWS_OPTIONS} ./dist "${S3_URL_PACKAGE}"
 }
@@ -38,10 +42,10 @@ __create_lambda_function() {
   S3Key=${PACKAGE_NAME}/"${PACKAGE_NAME}".jar
 
   aws lambda create-function ${AWS_OPTIONS} \
-    --function-name ${PROJECT_NAME}-${PACKAGE_NAME} \
-    --runtime python3.7 \
+    --function-name ${PACKAGE_NAME} \
+    --runtime java8 \
     --code S3Bucket=${S3_BUCKET},S3Key=${S3Key} \
-    --handler app.lambda_handler \
+    --handler com.aws.lambda.ZipHandler::handleRequest \
     --role ${IAM_ROLE}
 }
 
@@ -50,7 +54,7 @@ __update_lambda_function() {
   S3Key=${PACKAGE_NAME}/"${PACKAGE_NAME}".jar
 
   aws lambda update-function-code ${AWS_OPTIONS} \
-    --function-name ${PROJECT_NAME}-${PACKAGE_NAME} \
+    --function-name ${PACKAGE_NAME} \
     --s3-bucket ${S3_BUCKET} \
     --s3-key ${S3Key}
 
@@ -80,18 +84,19 @@ do
     --publish | -p)
       echo "--> Publishing ..."
       __copy_delivery_package
+      __create_lambda_function
       break
       ;;
     --update | -u)
       echo "--> Update function code ..."
       __build_project
-      cd .. && __copy_delivery_package
+      __copy_delivery_package
       __update_lambda_function
       break
       ;;
     --clean | -c)
       echo "--> Clean up ..."
-      __delete_directories
+      __clean_project
       break
       ;;
     *)

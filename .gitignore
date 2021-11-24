@@ -3,3 +3,4 @@ target
 *.iml*
 *aws_data*
 *dist*
+.envrc
