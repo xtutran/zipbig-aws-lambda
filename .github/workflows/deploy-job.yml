@@ -16,7 +16,7 @@ jobs:
           java-version: '11'
           distribution: 'adopt'
       - name: Build with Maven
-          run: ./make.sh -b
+        run: bash make.sh -b
 #      - name: Deploy lambda function
 #        uses: docker://amazon/aws-cli:2.0.7
 #        env:
